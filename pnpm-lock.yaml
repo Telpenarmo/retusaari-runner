@@ -7,6 +7,7 @@ specifiers:
   '@types/react': ^18.0.15
   '@types/react-dom': ^18.0.6
   '@vitejs/plugin-react': ^3.0.0
+  codejar: ^3.7.0
   react: ^18.2.0
   react-dom: ^18.2.0
   typescript: ^4.6.4
@@ -14,6 +15,7 @@ specifiers:
 
 dependencies:
   '@tauri-apps/api': 1.2.0
+  codejar: 3.7.0
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
 
@@ -666,6 +668,10 @@ packages:
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
     dev: true
+
+  /codejar/3.7.0:
+    resolution: {integrity: sha512-rqyDu2zNwfu1EhXI++LEMQDzhykS+V0BV52RemtCj5lczgTgWSufyEa+tS7RP7qCXH/WXOkU0eIthmFUzvG78Q==}
+    dev: false
 
   /color-convert/1.9.3:
     resolution: {integrity: sha512-QfAUtd+vFdAtFQcC8CCyYt1fYWxSqAiK2cSD6zDB8N3cpsEBAvRxp9zOGg6G/SHHJYAT88/az/IuDGALsNVbGg==}
