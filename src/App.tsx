@@ -4,6 +4,8 @@ import "./App.css";
 import { Editor } from "./components/Editor";
 
 function App() {
+  const [code, setCode] = useState('');
+
   return (
     <div className="row main">
       <form
@@ -13,7 +15,7 @@ function App() {
           e.preventDefault();
         }}>
 
-        <Editor code='function' onUpdate={() => { }} />
+        <Editor code={code} onUpdate={setCode} />
 
         <div className="row">
           <button type="submit">Run</button>
@@ -23,7 +25,7 @@ function App() {
       <div className="container panel" id="output-panel">
         <div className="panel-content">
 
-          <pre id="output" />
+          <pre id="output" className="hljs" />
 
         </div>
         <div className="row">
