@@ -1,19 +1,54 @@
-import { useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import { emit, listen } from '@tauri-apps/api/event'
 import "./App.css";
 import { Editor } from "./components/Editor";
 
 function App() {
   const [code, setCode] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
+
+  const onKillClicked = useCallback((e: FormEvent) => {
+    e.preventDefault();
+
+    killScript();
+  }, []);
+
+  const killScript = useCallback(() => {
+    emit('kill')
+      .then(() => {
+        setIsRunning(false);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }, []);
+
+  const runScript = useCallback(() => {
+
+    invoke('run', { code })
+      .catch(err => {
+        console.log(err);
+      })
+      .finally(() => {
+        setIsRunning(false);
+      });
+
+    setIsRunning(true);
+  }, []);
+
+  const onRunClicked = useCallback((e: FormEvent) => {
+    e.preventDefault();
+
+    runScript();
+  }, [isRunning, runScript]);
 
   return (
     <div className="row main">
       <form
         id="editor-panel"
         className="container panel"
-        onSubmit={(e) => {
-          e.preventDefault();
-        }}>
+        onSubmit={onRunClicked}>
 
         <Editor code={code} onUpdate={setCode} />
 
@@ -22,16 +57,17 @@ function App() {
         </div>
       </form>
 
-      <div className="container panel" id="output-panel">
+      <form className="container panel" id="output-panel"
+        onSubmit={onKillClicked}>
         <div className="panel-content">
 
           <pre id="output" className="hljs" />
 
         </div>
         <div className="row">
-          <button id="kill-btn">Kill</button>
+          <button id="kill-btn">Stop</button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
