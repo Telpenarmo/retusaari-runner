@@ -5,24 +5,30 @@ import { Editor } from "./components/Editor";
 
 function App() {
   return (
-    <div className="row">
-      <div className="container">
+    <div className="row main">
+      <form
+        id="editor-panel"
+        className="container panel"
+        onSubmit={(e) => {
+          e.preventDefault();
+        }}>
 
-        <form
-          className="editor-panel"
-          onSubmit={(e) => {
-            e.preventDefault();
-          }}>
+        <Editor code='function' onUpdate={() => { }} />
 
-          <Editor code='function' onUpdate={() => { }} />
+        <div className="row">
+          <button type="submit">Run</button>
+        </div>
+      </form>
 
-          <div className="row">
-            <button type="submit">Run</button>
-          </div>
-        </form>
+      <div className="container panel" id="output-panel">
+        <div className="panel-content">
 
-      </div>
-      <div className="container">
+          <pre id="output" />
+
+        </div>
+        <div className="row">
+          <button id="kill-btn">Kill</button>
+        </div>
       </div>
     </div>
   );

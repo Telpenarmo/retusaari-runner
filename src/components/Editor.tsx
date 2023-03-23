@@ -13,7 +13,7 @@ export const Editor: React.FC<EditorProps> = props => {
     const editorRef = React.useRef<HTMLDivElement>(null);
     const jar = React.useRef<CodeJar | null>(null);
 
-    const highlight = withLineNumbers(() => { });
+    const highlight = withLineNumbers(() => { }, { wrapClass: 'panel-content' });
 
     React.useEffect(() => {
         if (!editorRef.current) return;
