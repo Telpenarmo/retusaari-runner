@@ -4,8 +4,15 @@ import { emit, listen } from '@tauri-apps/api/event'
 import "./App.css";
 import { Editor } from "./components/Editor";
 
+interface RunResult {
+  status: number | undefined,
+  stdout: string,
+  stderr: string,
+}
+
 function App() {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState('println("Hello, World!")');
+  const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
 
   const onKillClicked = useCallback((e: FormEvent) => {
@@ -26,7 +33,13 @@ function App() {
 
   const runScript = useCallback(() => {
 
+    setOutput('');
+
     invoke('run', { code })
+      .then(x => {
+        let res = x as RunResult;
+        setOutput(res.stdout || res.stderr);
+      })
       .catch(err => {
         console.log(err);
       })
@@ -35,7 +48,7 @@ function App() {
       });
 
     setIsRunning(true);
-  }, []);
+  }, [code]);
 
   const onRunClicked = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -61,7 +74,9 @@ function App() {
         onSubmit={onKillClicked}>
         <div className="panel-content">
 
-          <pre id="output" className="hljs" />
+          <pre id="output" className="hljs">
+            {output}
+          </pre>
 
         </div>
         <div className="row">
