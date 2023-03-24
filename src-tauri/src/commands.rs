@@ -1,26 +1,31 @@
 use std::process::Stdio;
 
-use tauri::AppHandle;
-use tokio::process::{Child, Command};
+use tauri::{AppHandle, Manager};
+use tokio::{
+    io::{AsyncBufReadExt, AsyncRead, BufReader},
+    join,
+    process::{Child, Command},
+};
 
 const SCRIPT_NAME: &str = ".kts";
 
-#[derive(serde::Serialize)]
-pub struct RunResult {
-    pub status: Option<i32>,
-    pub stdout: String,
-    pub stderr: String,
-}
-
 #[tauri::command]
-pub async fn run(_app_handle: AppHandle, code: String) -> Result<RunResult, String> {
+pub async fn run(app_handle: AppHandle, code: String) -> Result<Option<i32>, String> {
     save_src(code).await;
 
-    let child = spawn_kotlinc()?;
+    let mut child = spawn_kotlinc()?;
     eprintln!("Running");
 
-    let output = child.wait_with_output().await;
-    let output = output.map_err(|e| {
+    let stdout = child.stdout.take().unwrap();
+    let stderr = child.stderr.take().unwrap();
+
+    let stdout_emitter = emit_output(stdout, app_handle.clone());
+    let stderr_emitter = emit_output(stderr, app_handle.clone());
+    let child_awaiter = child.wait();
+
+    let results = join!(child_awaiter, stdout_emitter, stderr_emitter);
+
+    let status = results.0.map_err(|e| {
         eprintln!("Waiting error: {e}");
         "Unknown error while waiting for the runner to finish."
     })?;
@@ -28,10 +33,31 @@ pub async fn run(_app_handle: AppHandle, code: String) -> Result<RunResult, Stri
     rm_temp_file().await;
 
     eprintln!("Finished");
-    Ok(RunResult {
-        status: output.status.code(),
-        stdout: String::from_utf8_lossy(&output.stdout).to_string(),
-        stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+    Ok(status.code())
+}
+
+async fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
+    child: R,
+    app_handle: tauri::AppHandle,
+) -> tauri::async_runtime::TokioJoinHandle<()> {
+    tokio::spawn(async move {
+        let mut reader = BufReader::new(child);
+        loop {
+            let mut line = String::new();
+            match reader.read_line(&mut line).await {
+                Err(err) => {
+                    eprintln!("Failed to read output: {err}");
+                    return;
+                }
+                Ok(0) => return,
+                Ok(_) => {
+                    eprintln!("Sending line of output");
+                    app_handle
+                        .emit_all("output", line)
+                        .unwrap_or_else(|err| eprintln!("Failed to send output: {err}"));
+                }
+            }
+        }
     })
 }
 

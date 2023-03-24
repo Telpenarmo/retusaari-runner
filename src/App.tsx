@@ -1,19 +1,21 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { emit, listen } from '@tauri-apps/api/event'
+import { emit, listen, UnlistenFn } from '@tauri-apps/api/event'
 import "./App.css";
 import { Editor } from "./components/Editor";
-
-interface RunResult {
-  status: number | undefined,
-  stdout: string,
-  stderr: string,
-}
 
 function App() {
   const [code, setCode] = useState('println("Hello, World!")');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const listening = useRef(false);
+
+  if (!listening.current) {
+    listening.current = true;
+    listen<string>('output', ev => {
+      setOutput(state => state + ev.payload);
+    });
+  }
 
   const onKillClicked = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -36,10 +38,6 @@ function App() {
     setOutput('');
 
     invoke('run', { code })
-      .then(x => {
-        let res = x as RunResult;
-        setOutput(res.stdout || res.stderr);
-      })
       .catch(err => {
         console.log(err);
       })
