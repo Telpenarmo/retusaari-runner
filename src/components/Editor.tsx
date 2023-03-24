@@ -29,6 +29,11 @@ export const Editor: React.FC<EditorProps> = props => {
         if (!editorRef.current) return;
 
         jar.current = CodeJar(editorRef.current, highlight);
+        jar.current.onUpdate(code => {
+            const pos = jar.current!.save();
+            props.onUpdate(code);
+            jar.current!.restore(pos);
+        });
 
         return () => jar.current!.destroy();
     }, []);
@@ -36,7 +41,7 @@ export const Editor: React.FC<EditorProps> = props => {
     React.useEffect(() => {
         if (!jar.current || !editorRef.current) return;
         jar.current.updateCode(props.code);
-    }, [props.code]);
+    }, []);
 
     return <div className='editor language-kotlin' ref={editorRef} />;
 };
