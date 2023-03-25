@@ -1,4 +1,4 @@
-use std::{process::Stdio, sync::Mutex};
+use std::process::Stdio;
 
 use command_group::{AsyncCommandGroup, AsyncGroupChild};
 use tauri::{async_runtime::TokioJoinHandle, AppHandle, Manager};
@@ -23,7 +23,7 @@ pub async fn run(app_handle: AppHandle, code: String) -> Result<Option<i32>, Str
     let (stdout_emitter, stderr_emitter) = spawn_emitters(&mut job, app_handle.clone());
 
     let (kill_sender, kill_receiver) = oneshot::channel();
-    let killer_listener = listen_for_killer(app_handle.clone(), move || {
+    let killer_listener = app_handle.once_global("kill", move |_| {
         kill_sender.send(()).expect("killer_listener is dropped")
     });
 
@@ -86,21 +86,6 @@ fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
             }
         }
         println!("Exiting emitter {desc}");
-    })
-}
-
-fn listen_for_killer<F: FnOnce() -> () + std::marker::Send + 'static>(
-    app_handle: tauri::AppHandle,
-    kill: F,
-) -> tauri::EventHandler {
-    let mutx = Mutex::new(Some(kill));
-    app_handle.listen_global("kill", move |_| {
-        let kill = mutx
-            .lock()
-            .expect("Failed to acquire lock")
-            .take()
-            .expect("Killed already");
-        kill()
     })
 }
 
