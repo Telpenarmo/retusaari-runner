@@ -12,6 +12,9 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --dark-background: #282c34;
+  --red: #E45649;
 }
 
 .container {
@@ -55,11 +58,16 @@ button {
   min-width: 120px;
 }
 
-button:hover {
+button:hover:enabled {
   border-color: #396cd8;
 }
 
-button:active {
+button:active:enabled {
   border-color: #396cd8;
   background-color: #e8e8e8;
+}
+
+button:disabled {
+  background-color: rgba(200, 200, 200, 0.6);
+  color: rgba(20, 20, 20, 0.7);
 }

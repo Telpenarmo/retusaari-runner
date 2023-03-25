@@ -9,6 +9,7 @@ function App() {
   const [code, setCode] = useState('println("Hello, World!")');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [status, setStatus] = useState<number>();
 
   const onKillClicked = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -29,10 +30,14 @@ function App() {
   const runScript = useCallback(() => {
 
     setOutput('');
+    setStatus(undefined);
 
     invoke('run', { code })
       .catch(err => {
         console.log(err);
+      })
+      .then(r => {
+        setStatus(r as number);
       })
       .finally(() => {
         setIsRunning(false);
@@ -64,7 +69,8 @@ function App() {
       <form className="container panel" id="output-panel"
         onSubmit={onKillClicked}>
 
-        <Output content={output} setContent={setOutput} />
+        <Output content={output} setContent={setOutput}
+          status={status ? 'error' : 'default'} />
 
         <div className="row button-row">
           <button id="kill-btn">Stop</button>
