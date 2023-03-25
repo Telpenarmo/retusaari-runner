@@ -1,21 +1,14 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import { emit, listen, UnlistenFn } from '@tauri-apps/api/event'
+import { emit } from '@tauri-apps/api/event'
 import "./App.css";
 import { Editor } from "./components/Editor";
+import Output from "./components/Output";
 
 function App() {
   const [code, setCode] = useState('println("Hello, World!")');
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
-  const listening = useRef(false);
-
-  if (!listening.current) {
-    listening.current = true;
-    listen<string>('output', ev => {
-      setOutput(state => state + ev.payload);
-    });
-  }
 
   const onKillClicked = useCallback((e: FormEvent) => {
     e.preventDefault();
@@ -70,13 +63,9 @@ function App() {
 
       <form className="container panel" id="output-panel"
         onSubmit={onKillClicked}>
-        <div className="panel-content">
 
-          <pre id="output" className="hljs">
-            {output}
-          </pre>
+        <Output content={output} setContent={setOutput} />
 
-        </div>
         <div className="row">
           <button id="kill-btn">Stop</button>
         </div>
