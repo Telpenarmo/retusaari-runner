@@ -1,5 +1,6 @@
 import React from 'react'
 import { useListener } from '../utils';
+import "./Output.css"
 
 interface OutputProps {
     content: string,

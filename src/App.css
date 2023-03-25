@@ -1,7 +1,22 @@
-.logo.vite:hover {
-  filter: drop-shadow(0 0 2em #747bff);
+.main {
+  margin: 5vh 0 0 0;
+  width: 100%;
+  min-width: 500px;
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafb);
+.panel {
+  min-height: 80vh;
+  max-height: 95vh;
+  max-width: max(40vw, 400px);
+  min-width: 25vw;
+}
+
+.panel-content {
+  height: calc(100% - 48px) !important;
+}
+
+.panel-content * {
+  height: inherit;
+  font-size: 16px;
+  line-height: 24px;
 }

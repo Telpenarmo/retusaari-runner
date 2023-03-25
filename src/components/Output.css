@@ -1,0 +1,14 @@
+#output {
+    overflow-wrap: break-word;
+    overflow: scroll;
+    border-radius: 6px;
+    resize: none !important;
+    margin: 0;
+    position: relative;
+    padding: 10px 2em 10px 40px;
+    height: inherit;
+}
+
+#output-panel {
+    flex-grow: 0.4;
+}

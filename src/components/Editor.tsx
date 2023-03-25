@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
 import { CodeJar } from "codejar";
 import { withLineNumbers } from "codejar/linenumbers";
 import hljs from 'highlight.js';
 import "highlight.js/styles/atom-one-dark.css";
 import kotlin from "highlight.js/lib/languages/kotlin"
+import "./Editor.css";
 
 hljs.registerLanguage('kotlin', kotlin);
 

@@ -1,0 +1,19 @@
+.editor {
+    padding: 10px 0 10px 30px;
+    border-radius: 6px;
+    resize: none !important;
+    font-family: 'JetBrains Mono';
+    font-weight: 400;
+    letter-spacing: normal;
+    tab-size: 4;
+    white-space: pre !important;
+}
+
+#editor-panel {
+    flex-grow: 0.7;
+}
+
+.codejar-linenumbers {
+    padding-left: 10px !important;
+    padding-bottom: 10px;
+}
