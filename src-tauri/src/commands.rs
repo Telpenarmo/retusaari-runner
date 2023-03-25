@@ -1,10 +1,13 @@
-use std::process::Stdio;
+use std::{process::Stdio, sync::Mutex};
 
+use command_group::{AsyncCommandGroup, AsyncGroupChild};
 use tauri::{AppHandle, Manager};
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead, BufReader},
     join,
-    process::{Child, Command},
+    process::Command,
+    select,
+    sync::oneshot,
 };
 
 const SCRIPT_NAME: &str = ".kts";
@@ -13,30 +16,44 @@ const SCRIPT_NAME: &str = ".kts";
 pub async fn run(app_handle: AppHandle, code: String) -> Result<Option<i32>, String> {
     save_src(code).await;
 
-    let mut child = spawn_kotlinc()?;
+    let mut job = spawn_kotlinc()?;
     eprintln!("Running");
 
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
+    let leader = job.inner();
+    let stdout = leader.stdout.take().unwrap();
+    let stderr = leader.stderr.take().unwrap();
 
     let stdout_emitter = emit_output(stdout, app_handle.clone());
     let stderr_emitter = emit_output(stderr, app_handle.clone());
-    let child_awaiter = child.wait();
 
-    let results = join!(child_awaiter, stdout_emitter, stderr_emitter);
+    let (kill_sender, kill_receiver) = oneshot::channel();
+    let killer_listener = listen_for_killer(app_handle.clone(), move || {
+        kill_sender.send(()).expect("killer_listener is dropped")
+    });
 
-    let status = results.0.map_err(|e| {
+    let status = select! {
+        res = job.wait() => res,
+        _ = kill_receiver => {
+            job.kill().expect("The child is already dead");
+            job.wait().await
+        }
+    };
+
+    let status = status.map_err(|e| {
         eprintln!("Waiting error: {e}");
         "Unknown error while waiting for the runner to finish."
     })?;
 
+    let _ = join!(stdout_emitter, stderr_emitter);
+
+    app_handle.unlisten(killer_listener);
     rm_temp_file().await;
 
     eprintln!("Finished");
     Ok(status.code())
 }
 
-async fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
+fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
     child: R,
     app_handle: tauri::AppHandle,
 ) -> tauri::async_runtime::TokioJoinHandle<()> {
@@ -61,6 +78,21 @@ async fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'st
     })
 }
 
+fn listen_for_killer<F: FnOnce() -> () + std::marker::Send + 'static>(
+    app_handle: tauri::AppHandle,
+    kill: F,
+) -> tauri::EventHandler {
+    let mutx = Mutex::new(Some(kill));
+    app_handle.listen_global("kill", move |_| {
+        let kill = mutx
+            .lock()
+            .expect("Failed to acquire lock")
+            .take()
+            .expect("Killed already");
+        kill()
+    })
+}
+
 async fn save_src(src: String) -> Option<String> {
     tokio::fs::write(SCRIPT_NAME, src.as_bytes())
         .await
@@ -75,15 +107,13 @@ async fn rm_temp_file() -> Option<String> {
         .map(|e| format!("Failed to save code to temporary file: {e}"))
 }
 
-fn spawn_kotlinc() -> Result<Child, String> {
+fn spawn_kotlinc() -> Result<AsyncGroupChild, String> {
     let mut command = Command::new("kotlinc");
     let command = command.arg("-script").arg(SCRIPT_NAME);
 
-    let child = command
+    command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("Failed to spawn kotlinc: {e}"))?;
-
-    Ok(child)
+        .group_spawn()
+        .map_err(|e| format!("Failed to spawn kotlinc: {e}"))
 }
