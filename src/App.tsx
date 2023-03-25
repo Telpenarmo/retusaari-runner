@@ -56,7 +56,7 @@ function App() {
 
         <Editor code={code} onUpdate={setCode} />
 
-        <div className="row">
+        <div className="row button-row">
           <button type="submit">Run</button>
         </div>
       </form>
@@ -66,7 +66,7 @@ function App() {
 
         <Output content={output} setContent={setOutput} />
 
-        <div className="row">
+        <div className="row button-row">
           <button id="kill-btn">Stop</button>
         </div>
       </form>

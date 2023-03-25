@@ -1,12 +1,10 @@
 #output {
-    overflow-wrap: break-word;
+    white-space: pre !important;
     overflow: scroll;
     border-radius: 6px;
     resize: none !important;
     margin: 0;
-    position: relative;
-    padding: 10px 2em 10px 40px;
-    height: inherit;
+    padding: 10px 10px 10px 20px;
 }
 
 #output-panel {
