@@ -9,11 +9,18 @@ import './Editor.css';
 hljs.registerLanguage('kotlin', kotlin);
 
 interface EditorProps {
-  code: string;
-  onUpdate: (code: string) => void;
+    code: string;
+    onUpdate: (code: string) => void;
 }
 
-const highlight = withLineNumbers(hljs.highlightElement, {
+const highlightElement = (editor: HTMLElement) => {
+    // needed for escaping
+    // eslint-disable-next-line no-self-assign
+    editor.textContent = editor.textContent;
+    hljs.highlightElement(editor);
+};
+
+const highlight = withLineNumbers(highlightElement, {
     wrapClass: 'panel-content',
 });
 
@@ -28,7 +35,7 @@ export const Editor: React.FC<EditorProps> = (props) => {
         jar.current.onUpdate((code) => {
             const pos = jar.current!.save();
             props.onUpdate(code);
-      jar.current!.restore(pos);
+            jar.current!.restore(pos);
         });
 
         return () => jar.current!.destroy();

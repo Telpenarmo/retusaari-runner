@@ -7,7 +7,7 @@
 .panel {
   min-height: 90vh;
   max-height: 93vh;
-  max-width: max(40vw, 400px);
+  max-width: max(44vw, 400px);
   min-width: 25vw;
 }
 

@@ -14,24 +14,25 @@ function App() {
     const onKillClicked = useCallback((e: FormEvent) => {
         e.preventDefault();
 
-        killScript();
+        return killScript();
     }, []);
 
-    const killScript = useCallback(() => {
-        emit('kill')
-            .then(() => {
-                setIsRunning(false);
-            })
-            .catch((err) => {
-                console.log(err);
-            });
+    const killScript = useCallback(async () => {
+        try {
+            await emit('kill');
+            setIsRunning(false);
+        } catch (err) {
+            console.log(err);
+        }
     }, []);
 
     const runScript = useCallback(() => {
         setOutput('');
         setStatus(undefined);
 
-        invoke('run', { code })
+        setIsRunning(true);
+
+        return invoke('run', { code })
             .catch((err) => {
                 console.log(err);
             })
@@ -41,14 +42,11 @@ function App() {
             .finally(() => {
                 setIsRunning(false);
             });
-
-        setIsRunning(true);
     }, [code]);
 
     const onRunClicked = useCallback(
         (e: FormEvent) => {
             e.preventDefault();
-
             runScript();
         },
         [isRunning, runScript]
@@ -61,10 +59,14 @@ function App() {
                 className="container panel"
                 onSubmit={onRunClicked}
             >
+                <h3>Code</h3>
+
                 <Editor code={code} onUpdate={setCode} />
 
                 <div className="row button-row">
-                    <button type="submit">Run</button>
+                    <button type="submit" disabled={isRunning}>
+                        Run
+                    </button>
                 </div>
             </form>
 
@@ -73,6 +75,8 @@ function App() {
                 id="output-panel"
                 onSubmit={onKillClicked}
             >
+                <h3>Output</h3>
+
                 <Output
                     content={output}
                     setContent={setOutput}
@@ -80,7 +84,9 @@ function App() {
                 />
 
                 <div className="row button-row">
-                    <button id="kill-btn">Stop</button>
+                    <button type="submit" disabled={!isRunning}>
+                        Stop
+                    </button>
                 </div>
             </form>
         </div>
