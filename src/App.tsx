@@ -22,21 +22,20 @@ function App() {
             .then(() => {
                 setIsRunning(false);
             })
-            .catch(err => {
+            .catch((err) => {
                 console.log(err);
             });
     }, []);
 
     const runScript = useCallback(() => {
-
         setOutput('');
         setStatus(undefined);
 
         invoke('run', { code })
-            .catch(err => {
+            .catch((err) => {
                 console.log(err);
             })
-            .then(r => {
+            .then((r) => {
                 setStatus(r as number);
             })
             .finally(() => {
@@ -46,19 +45,22 @@ function App() {
         setIsRunning(true);
     }, [code]);
 
-    const onRunClicked = useCallback((e: FormEvent) => {
-        e.preventDefault();
+    const onRunClicked = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
 
-        runScript();
-    }, [isRunning, runScript]);
+            runScript();
+        },
+        [isRunning, runScript]
+    );
 
     return (
         <div className="row main">
             <form
                 id="editor-panel"
                 className="container panel"
-                onSubmit={onRunClicked}>
-
+                onSubmit={onRunClicked}
+            >
                 <Editor code={code} onUpdate={setCode} />
 
                 <div className="row button-row">
@@ -66,11 +68,16 @@ function App() {
                 </div>
             </form>
 
-            <form className="container panel" id="output-panel"
-                onSubmit={onKillClicked}>
-
-                <Output content={output} setContent={setOutput}
-                    status={status ? 'error' : 'default'} />
+            <form
+                className="container panel"
+                id="output-panel"
+                onSubmit={onKillClicked}
+            >
+                <Output
+                    content={output}
+                    setContent={setOutput}
+                    status={status ? 'error' : 'default'}
+                />
 
                 <div className="row button-row">
                     <button id="kill-btn">Stop</button>

@@ -1,18 +1,18 @@
 #output {
-    white-space: pre !important;
-    overflow: scroll;
-    border-radius: 6px;
-    resize: none !important;
-    margin: 0;
-    padding: 4px 10px 4px 20px;
-    border: 6px solid;
-    border-color: var(--dark-background);
+  white-space: pre !important;
+  overflow: scroll;
+  border-radius: 6px;
+  resize: none !important;
+  margin: 0;
+  padding: 4px 10px 4px 20px;
+  border: 6px solid;
+  border-color: var(--dark-background);
 }
 
 #output-panel {
-    flex-grow: 0.4;
+  flex-grow: 0.4;
 }
 
 #output.error {
-    border-color: var(--red);
+  border-color: var(--red);
 }
