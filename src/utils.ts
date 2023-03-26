@@ -1,4 +1,4 @@
-import { EventCallback, listen } from "@tauri-apps/api/event";
+import { EventCallback, listen } from '@tauri-apps/api/event';
 
 let listening = false;
 

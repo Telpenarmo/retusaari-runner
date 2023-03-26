@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { CodeJar } from "codejar";
-import { withLineNumbers } from "codejar/linenumbers";
+import { CodeJar } from 'codejar';
+import { withLineNumbers } from 'codejar/linenumbers';
 import hljs from 'highlight.js';
-import "highlight.js/styles/atom-one-dark.css";
-import kotlin from "highlight.js/lib/languages/kotlin"
-import "./Editor.css";
+import 'highlight.js/styles/atom-one-dark.css';
+import kotlin from 'highlight.js/lib/languages/kotlin';
+import './Editor.css';
 
 hljs.registerLanguage('kotlin', kotlin);
 
@@ -13,17 +13,12 @@ interface EditorProps {
     onUpdate: (code: string) => void;
 }
 
-const highlightElement = (editor: HTMLElement) => {
-    editor.textContent = editor.textContent;
-    hljs.highlightElement(editor);
-}
+const highlight = withLineNumbers(hljs.highlightElement, { wrapClass: 'panel-content' });
 
 export const Editor: React.FC<EditorProps> = props => {
 
-    const editorRef = React.useRef<HTMLDivElement>(null);
-    const jar = React.useRef<CodeJar | null>(null);
+    const editorRef = React.useRef<HTMLDivElement>(null); const jar = React.useRef<CodeJar | null>(null);
 
-    const highlight = withLineNumbers(highlightElement, { wrapClass: 'panel-content' });
 
     React.useEffect(() => {
         if (!editorRef.current) return;

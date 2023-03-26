@@ -1,6 +1,6 @@
-import React from 'react'
+import React from 'react';
 import { useListener } from '../utils';
-import "./Output.css"
+import './Output.css';
 
 interface OutputProps {
     content: string,
@@ -21,7 +21,7 @@ const Output: React.FC<OutputProps> = props => {
                 {props.content}
             </pre>
         </div>
-    )
-}
+    );
+};
 
-export default Output
+export default Output;
