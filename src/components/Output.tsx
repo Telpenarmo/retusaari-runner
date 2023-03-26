@@ -1,16 +1,24 @@
 import React, { useCallback } from 'react';
-import { ErrorMessageMatch, matchErrorMessage, useListener } from '../utils';
+import {
+    ErrorMessageMatch,
+    matchErrorMessage,
+    Position,
+    useListener,
+} from '../utils';
 import './Output.css';
+
+type JumpHandler = (pos: Position) => void;
 
 interface OutputProps {
     content: string;
     setContent: React.Dispatch<React.SetStateAction<string>>;
     status: StatusClass;
+    jumpToEditor: JumpHandler;
 }
 
 type StatusClass = 'default' | 'error';
 
-type Classes = 'errorMsg' | 'errorHeading';
+type Classes = 'errorMsg' | 'errorHeading' | 'location';
 
 const styles: Record<Classes, React.CSSProperties> = {
     errorMsg: {
@@ -21,12 +29,20 @@ const styles: Record<Classes, React.CSSProperties> = {
         fontWeight: 'bold',
         color: 'var(--red)',
     },
+
+    location: {
+        pointerEvents: 'all',
+        textDecorationLine: 'underline',
+        cursor: 'pointer',
+    },
 };
 
-const constructErrorMessage = (match: ErrorMessageMatch) => {
+const constructErrorMessage = (match: ErrorMessageMatch, jump: JumpHandler) => {
     return (
-        <span>
-            <span>{match.location}</span>
+        <span key={match.location}>
+            <span style={styles.location} onClick={() => jump(match.position)}>
+                {match.location}
+            </span>
             <span style={styles.errorHeading}> error: </span>
             <span style={styles.errorMsg}>{match.message}</span>
             {'\n'}
@@ -43,7 +59,7 @@ const Output: React.FC<OutputProps> = (props) => {
         const matched = matchErrorMessage(line);
         if (!matched) return line + '\n';
 
-        return constructErrorMessage(matched);
+        return constructErrorMessage(matched, props.jumpToEditor);
     }, []);
 
     const highlighntErrors = useCallback((text: string) => {

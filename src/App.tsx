@@ -4,12 +4,14 @@ import { emit } from '@tauri-apps/api/event';
 import './App.css';
 import { Editor } from './components/Editor';
 import Output from './components/Output';
+import { Position } from './utils';
 
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
     const [output, setOutput] = useState('');
     const [isRunning, setIsRunning] = useState(false);
     const [status, setStatus] = useState<number>();
+    const [requestedPosition, requestPosition] = useState<Position>();
 
     const onKillClicked = useCallback((e: FormEvent) => {
         e.preventDefault();
@@ -61,7 +63,11 @@ function App() {
             >
                 <h3>Code</h3>
 
-                <Editor code={code} onUpdate={setCode} />
+                <Editor
+                    code={code}
+                    onUpdate={setCode}
+                    position={requestedPosition}
+                />
 
                 <div className="row button-row">
                     <button type="submit" disabled={isRunning}>
@@ -81,6 +87,7 @@ function App() {
                     content={output}
                     setContent={setOutput}
                     status={status ? 'error' : 'default'}
+                    jumpToEditor={requestPosition}
                 />
 
                 <div className="row button-row">

@@ -30,8 +30,8 @@ export function matchErrorMessage(line: string): ErrorMessageMatch | undefined {
         location: matched[1],
         message: matched[4],
         position: {
-            line: +matched[2],
-            column: +matched[3]
+            line: +matched[2] - 1,
+            column: +matched[3] - 1
         }
     };
 }
