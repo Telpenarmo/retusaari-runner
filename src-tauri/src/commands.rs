@@ -1,7 +1,11 @@
-use std::process::Stdio;
+use std::{
+    path::{Path, PathBuf},
+    process::Stdio,
+};
+
+use tauri::{async_runtime::TokioJoinHandle, Manager, Window};
 
 use command_group::{AsyncCommandGroup, AsyncGroupChild};
-use tauri::{async_runtime::TokioJoinHandle, AppHandle, Manager};
 use tokio::{
     io::{AsyncBufReadExt, AsyncRead, BufReader},
     join,
@@ -10,63 +14,64 @@ use tokio::{
     sync::oneshot,
 };
 
-const SCRIPT_NAME: &str = ".kts";
-
 #[tauri::command]
-pub async fn run(app_handle: AppHandle, code: String) -> Result<Option<i32>, String> {
+pub async fn run(window: Window, code: String) -> Result<Option<i32>, String> {
     eprintln!("Running");
 
-    save_src(code).await?;
+    let script_path = script_path(&window)?;
+    save_src(&script_path, code).await?;
 
-    let mut job = spawn_kotlinc()?;
+    let mut job = spawn_kotlinc(&script_path)?;
 
-    let (stdout_emitter, stderr_emitter) = spawn_emitters(&mut job, app_handle.clone());
+    let (stdout_emitter, stderr_emitter) = spawn_emitters(&mut job, window.clone());
 
     let (kill_sender, kill_receiver) = oneshot::channel();
-    let killer_listener = app_handle.once_global("kill", move |_| {
+    let killer_listener = window.once("kill", move |_| {
         kill_sender.send(()).expect("killer_listener is dropped")
     });
 
     // wait for either the task to finish or a kill event
     let status = select! {
-        res = job.wait() => res,
+        res = job.wait() => res.map_err(map_waiting_error).map(Option::Some),
         _ = kill_receiver => {
-            job.kill().expect("The child is already dead");
-            job.wait().await
+            let killed = job.kill();
+            if let Err(err) = killed {
+                eprintln!("Kill failed, probably process was already dead ({err}).");
+                Err("Kill failed".to_owned())
+            } else {
+                Ok(None)
+            }
         }
-    }
-    .map_err(|e| {
-        eprintln!("Waiting error: {e}");
-        "Unknown error while waiting for the runner to finish."
-    })?;
+    };
 
     let _ = join!(stdout_emitter, stderr_emitter); // ensure emitters finished too
 
     // cleanup
-    app_handle.unlisten(killer_listener);
-    rm_temp_file().await?;
+    window.unlisten(killer_listener);
+    let did_remove = rm_temp_file(&script_path).await;
 
     eprintln!("Finished");
-    Ok(status.code())
+    did_remove?;
+    Ok(status?.and_then(|st| st.code()))
 }
 
 fn spawn_emitters(
     job: &mut AsyncGroupChild,
-    app_handle: AppHandle,
+    window: Window,
 ) -> (TokioJoinHandle<()>, TokioJoinHandle<()>) {
     let leader = job.inner();
     let stdout = leader.stdout.take().unwrap();
     let stderr = leader.stderr.take().unwrap();
 
-    let out_ = emit_output(stdout, app_handle.clone(), "stdout");
-    let err_ = emit_output(stderr, app_handle, "stderr");
+    let out_ = emit_output(stdout, window.clone(), "stdout");
+    let err_ = emit_output(stderr, window, "stderr");
 
     (out_, err_)
 }
 
 fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
     child: R,
-    app_handle: tauri::AppHandle,
+    app_handle: Window,
     desc: &'static str,
 ) -> tauri::async_runtime::TokioJoinHandle<()> {
     tokio::spawn(async move {
@@ -81,7 +86,9 @@ fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
                 Ok(0) => break,
                 Ok(_) => {
                     eprintln!("Sending line from {desc}");
-                    app_handle.emit_all("output", line).unwrap();
+                    app_handle
+                        .emit("output", line)
+                        .expect("Failed to emit the output event.");
                 }
             }
         }
@@ -89,21 +96,36 @@ fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
     })
 }
 
-async fn save_src(src: String) -> Result<(), String> {
-    tokio::fs::write(SCRIPT_NAME, src.as_bytes())
+fn map_waiting_error(err: std::io::Error) -> String {
+    eprintln!("Waiting error: {err}");
+    "Unknown error while waiting for the runner to finish.".to_owned()
+}
+
+fn script_path(window: &Window) -> Result<PathBuf, &str> {
+    let app_handle = window.app_handle();
+    let Some(mut path) = app_handle.path_resolver().app_cache_dir() else {
+        return Err("Unsupported platform");
+    };
+    path.set_file_name(window.label());
+    path.set_extension("kts");
+    Ok(path)
+}
+
+async fn save_src(script_path: &Path, src: String) -> Result<(), String> {
+    tokio::fs::write(script_path, src.as_bytes())
         .await
         .map_err(|e| format!("Failed to save code to temporary file: {e}"))
 }
 
-async fn rm_temp_file() -> Result<(), String> {
-    tokio::fs::remove_file(SCRIPT_NAME)
+async fn rm_temp_file(script_path: &Path) -> Result<(), String> {
+    tokio::fs::remove_file(script_path)
         .await
         .map_err(|e| format!("Failed to remove temporary file: {e}"))
 }
 
-fn spawn_kotlinc() -> Result<AsyncGroupChild, String> {
+fn spawn_kotlinc(script_path: &Path) -> Result<AsyncGroupChild, String> {
     let mut command = Command::new("kotlinc");
-    let command = command.arg("-script").arg(SCRIPT_NAME);
+    let command = command.arg("-script").arg(script_path);
 
     command
         .stdout(Stdio::piped())

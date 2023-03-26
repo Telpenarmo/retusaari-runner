@@ -21,7 +21,7 @@ export interface ErrorMessageMatch {
 
 export function matchErrorMessage(line: string): ErrorMessageMatch | undefined {
 
-    const re = /^.kts:((\d+):(\d+):) error: (.*)$/;
+    const re = /^(?:.*).kts:((\d+):(\d+):) error: (.*)$/;
 
     const matched = line.match(re);
     if (!matched) return undefined;
