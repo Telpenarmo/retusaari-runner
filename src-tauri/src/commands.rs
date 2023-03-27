@@ -75,9 +75,9 @@ fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
     app_handle: Window,
     desc: &'static str,
 ) -> tauri::async_runtime::TokioJoinHandle<()> {
-    let mut buf = [0; 1024];
+    let mut buf = [0; 8 * 1024];
     tokio::spawn(async move {
-        let duration = tokio::time::Duration::from_millis(100);
+        let duration = tokio::time::Duration::from_millis(50);
         let mut reader = BufReader::new(child);
         let mut timer = time::interval(duration);
         loop {

@@ -4,11 +4,11 @@ import { emit } from '@tauri-apps/api/event';
 import './App.css';
 import { Editor } from './components/Editor';
 import Output from './components/Output';
-import { Position } from './utils';
+import { Position, useSignal } from './utils';
 
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
-    const [output, setOutput] = useState('');
+    const [clearingSignal, clearOutput] = useSignal();
     const [isRunning, setIsRunning] = useState(false);
     const [status, setStatus] = useState<number>();
     const [requestedPosition, requestPosition] = useState<Position>();
@@ -29,7 +29,7 @@ function App() {
     }, []);
 
     const runScript = useCallback(() => {
-        setOutput('');
+        clearOutput();
         setStatus(undefined);
 
         setIsRunning(true);
@@ -99,10 +99,9 @@ function App() {
                 <h3>Output</h3>
 
                 <Output
-                    content={output}
-                    setContent={setOutput}
                     status={status ? 'error' : 'default'}
                     jumpToEditor={requestPosition}
+                    clear={clearingSignal}
                 />
 
                 <div className="row button-row">

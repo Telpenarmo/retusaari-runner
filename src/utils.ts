@@ -1,12 +1,4 @@
-import { EventCallback, listen } from '@tauri-apps/api/event';
-
-let listening = false;
-
-export function useListener<T>(eventName: string, handler: EventCallback<T>) {
-    if (listening) return;
-    listen(eventName, handler);
-    listening = true;
-}
+import { useState } from 'react';
 
 export interface Position {
     line: number,
@@ -21,7 +13,7 @@ export interface ErrorMessageMatch {
 
 export function matchErrorMessage(line: string): ErrorMessageMatch | undefined {
 
-    const re = /^(?:.*).kts:((\d+):(\d+):) error: (.*)$/;
+    const re = /^(?:.*).kts:((\d+):(\d+):) error: (.*)\n$/;
 
     const matched = line.match(re);
     if (!matched) return undefined;
@@ -34,4 +26,10 @@ export function matchErrorMessage(line: string): ErrorMessageMatch | undefined {
             column: +matched[3] - 1
         }
     };
+}
+
+export function useSignal(): [unknown, () => void] {
+    const [val, setVal] = useState(false);
+    const signal = () => setVal(s => !s);
+    return [val, signal];
 }
