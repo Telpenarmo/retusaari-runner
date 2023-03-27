@@ -7,11 +7,12 @@ use tauri::{async_runtime::TokioJoinHandle, Manager, Window};
 
 use command_group::{AsyncCommandGroup, AsyncGroupChild};
 use tokio::{
-    io::{AsyncBufReadExt, AsyncRead, BufReader},
+    io::{AsyncRead, AsyncReadExt, BufReader},
     join,
     process::Command,
     select,
     sync::oneshot,
+    time,
 };
 
 #[tauri::command]
@@ -74,21 +75,25 @@ fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
     app_handle: Window,
     desc: &'static str,
 ) -> tauri::async_runtime::TokioJoinHandle<()> {
+    let mut buf = [0; 1024];
     tokio::spawn(async move {
+        let duration = tokio::time::Duration::from_millis(100);
         let mut reader = BufReader::new(child);
+        let mut timer = time::interval(duration);
         loop {
-            let mut line = String::new();
-            match reader.read_line(&mut line).await {
+            timer.tick().await;
+            match reader.read(&mut buf).await {
+                Ok(0) => break,
+                Ok(read) => {
+                    eprintln!("Sending chunk from {desc}");
+                    let payload = String::from_utf8_lossy(&buf[..read]).to_string();
+                    app_handle
+                        .emit("output", payload)
+                        .expect("Failed to emit the output event.");
+                }
                 Err(err) => {
                     eprintln!("Failed to read {desc}: {err}");
                     break;
-                }
-                Ok(0) => break,
-                Ok(_) => {
-                    eprintln!("Sending line from {desc}");
-                    app_handle
-                        .emit("output", line)
-                        .expect("Failed to emit the output event.");
                 }
             }
         }
