@@ -2,6 +2,7 @@ import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { emit, TauriEvent } from '@tauri-apps/api/event';
 import { appWindow } from '@tauri-apps/api/window';
+import { message } from '@tauri-apps/api/dialog';
 
 import './App.css';
 import { Editor } from './components/Editor';
@@ -26,7 +27,7 @@ function App() {
             await emit('kill');
             setIsRunning(false);
         } catch (err) {
-            console.log(err);
+            message(err as string, { title: 'Failed to stop', type: 'error' });
         }
     }, []);
 
@@ -38,7 +39,7 @@ function App() {
 
         return invoke('run', { code })
             .catch((err) => {
-                console.log(err);
+                message(err, { title: 'Failed to run', type: 'error' });
             })
             .then((r) => {
                 setStatus(r as number);

@@ -13,41 +13,15 @@
   "tauri": {
     "allowlist": {
       "all": false,
-      "shell": {
+      "dialog": {
         "all": false,
-        "open": true
+        "ask": false,
+        "confirm": true,
+        "message": true
       },
       "window": {
         "all": false,
-        "center": false,
-        "close": true,
-        "create": false,
-        "hide": false,
-        "maximize": false,
-        "minimize": false,
-        "print": false,
-        "requestUserAttention": false,
-        "setAlwaysOnTop": false,
-        "setCursorGrab": false,
-        "setCursorIcon": false,
-        "setCursorPosition": false,
-        "setCursorVisible": false,
-        "setDecorations": false,
-        "setFocus": false,
-        "setFullscreen": false,
-        "setIcon": false,
-        "setIgnoreCursorEvents": false,
-        "setMaxSize": false,
-        "setMinSize": false,
-        "setPosition": false,
-        "setResizable": false,
-        "setSize": false,
-        "setSkipTaskbar": false,
-        "setTitle": false,
-        "show": false,
-        "startDragging": false,
-        "unmaximize": false,
-        "unminimize": false
+        "close": true
       }
     },
     "bundle": {
