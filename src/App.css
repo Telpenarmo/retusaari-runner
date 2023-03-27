@@ -1,28 +1,45 @@
 .main {
-  margin: 5vh 0 0 0;
-  width: 100%;
-  min-width: 500px;
+    margin: 5vh 0 0 0;
+    width: 100%;
+    min-width: 500px;
 }
 
 .panel {
-  min-height: 90vh;
-  max-height: 93vh;
-  max-width: max(44vw, 400px);
-  min-width: 25vw;
+    min-height: 90vh;
+    max-height: 93vh;
+    max-width: max(44vw, 400px);
+    min-width: 25vw;
 }
 
 .panel-content {
-  flex-grow: 1;
-  max-height: initial;
-  overflow: hidden;
+    flex-grow: 1;
+    max-height: initial;
+    overflow: hidden;
 }
 
 .panel-content * {
-  height: calc(100% - 20px);
-  font-size: 16px;
-  line-height: 24px;
+    height: calc(100% - 20px);
+    font-size: 16px;
+    line-height: 24px;
 }
 
 .button-row {
-  margin: 5vh 0;
+    margin: 5vh 0;
+}
+
+.center {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-left: 30px;
+    height: 100%;
+}
+
+.pulsating-circle {
+    background: var(--green);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    box-shadow: 0px 0px 1px 1px #0000001a;
+    animation: pulse 1.2s infinite;
 }

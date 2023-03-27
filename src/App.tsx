@@ -1,11 +1,12 @@
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { emit, TauriEvent } from '@tauri-apps/api/event';
+import { appWindow } from '@tauri-apps/api/window';
+
 import './App.css';
 import { Editor } from './components/Editor';
 import Output from './components/Output';
 import { Position, useSignal } from './utils';
-import { appWindow } from '@tauri-apps/api/window';
 
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
@@ -102,7 +103,14 @@ function App() {
                 id="output-panel"
                 onSubmit={onKillClicked}
             >
-                <h3>Output</h3>
+                <div style={{ display: 'flex' }}>
+                    <h3>Output</h3>
+                    {isRunning && (
+                        <div className="center">
+                            <i className="pulsating-circle" />
+                        </div>
+                    )}
+                </div>
 
                 <Output
                     status={status ? 'error' : 'default'}
