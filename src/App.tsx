@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { emit } from '@tauri-apps/api/event';
 import './App.css';
@@ -53,6 +53,21 @@ function App() {
         },
         [isRunning, runScript]
     );
+
+    const handleKeyPress = (e: KeyboardEvent) => {
+        if (e.ctrlKey) {
+            if (!isRunning && e.key === 'Enter') runScript();
+
+            if (isRunning && e.key === 'c') killScript();
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyPress);
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        };
+    }, [isRunning, runScript, killScript]);
 
     return (
         <div className="row main">
