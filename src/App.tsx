@@ -1,10 +1,11 @@
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { emit } from '@tauri-apps/api/event';
+import { emit, TauriEvent } from '@tauri-apps/api/event';
 import './App.css';
 import { Editor } from './components/Editor';
 import Output from './components/Output';
 import { Position, useSignal } from './utils';
+import { appWindow } from '@tauri-apps/api/window';
 
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
@@ -68,6 +69,11 @@ function App() {
             document.removeEventListener('keydown', handleKeyPress);
         };
     }, [isRunning, runScript, killScript]);
+
+    appWindow.listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
+        await killScript();
+        appWindow.close();
+    });
 
     return (
         <div className="row main">
