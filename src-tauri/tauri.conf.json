@@ -33,7 +33,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "com.telpenarmo.retusaari",
       "targets": "all"
     },
     "security": {
@@ -46,7 +46,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "retusaari-runner",
+        "title": "Retusaari Runner",
         "width": 1400,
         "height": 800
       }

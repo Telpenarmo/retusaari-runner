@@ -43,11 +43,12 @@ export const Editor: React.FC<EditorProps> = (props) => {
         return () => jar.current!.destroy();
     }, []);
 
-    function convertPosition(position: Position): CodejarPosition | null {
-        const regex = `(?:(?:.*\\n){${position.line}}(?:.){${position.column}})`;
-        const match = props.code.match(regex);
-        const offset = match?.[0].length;
-        if (!offset) return null;
+    function convertPosition(position: Position): CodejarPosition {
+        const lines = props.code.split('\n').slice(0, position.line);
+
+        // sum of lengths of prefix lines, incremented by '\n' character
+        const linesSum = lines.reduce((sum, line) => sum + line.length + 1, 0);
+        const offset = linesSum + position.column;
         return {
             start: offset,
             end: offset,
@@ -62,7 +63,6 @@ export const Editor: React.FC<EditorProps> = (props) => {
     React.useEffect(() => {
         if (!props.position) return;
         const pos = convertPosition(props.position);
-        if (!pos) return;
         jar.current?.restore(pos);
     }, [props.position]);
 

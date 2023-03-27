@@ -6,8 +6,10 @@ import React, {
     useRef,
     useState,
 } from 'react';
+
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
+
 import { ErrorMessageMatch, matchErrorMessage, Position } from '../utils';
 import './Output.css';
 
@@ -64,9 +66,12 @@ const Output: React.FC<OutputProps> = (props) => {
     useEffect(() => {
         const promise = listen<string>('output', (ev) => {
             // we don't want to get an empty string from splitting
-            if (ev.payload.endsWith('\n')) ev.payload.trimEnd();
 
-            const payloadLines = ev.payload.split('\n');
+            const payload = ev.payload.endsWith('\n')
+                ? ev.payload.trimEnd()
+                : ev.payload;
+
+            const payloadLines = payload.split('\n');
             const len = lines.current.push(...payloadLines);
 
             setLinesCount(len);
@@ -81,19 +86,22 @@ const Output: React.FC<OutputProps> = (props) => {
         lines.current.length = 0;
     }, [props.clear]);
 
-    const highlightLine = useCallback((line: string, style: CSSProperties) => {
-        const plain = <span style={style}>{line}</span>;
+    const highlightLine = useCallback(
+        (line: string, style: CSSProperties) => {
+            const plain = <span style={style}>{line}</span>;
 
-        if (props.status === 'default') return plain;
+            if (props.status === 'default') return plain;
 
-        const matched = matchErrorMessage(line);
-        if (!matched) return plain;
+            const matched = matchErrorMessage(line);
+            if (!matched) return plain;
 
-        return constructErrorMessage(matched, props.jumpToEditor, style);
-    }, []);
+            return constructErrorMessage(matched, props.jumpToEditor, style);
+        },
+        [props.status]
+    );
 
     const rows = ({ index, style }: { index: number; style: CSSProperties }) =>
-        highlightLine(lines.current[index] + '\n', style);
+        highlightLine(lines.current[index], style);
 
     return (
         <div className="panel-content">
