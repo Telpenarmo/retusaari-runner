@@ -1,14 +1,14 @@
 .main {
-    margin: 5vh 0 0 0;
-    width: 100%;
-    min-width: 500px;
+    margin: 5vh 4vw 0;
+    column-gap: 4vw;
+    width: 92vw;
 }
 
 .panel {
     min-height: 90vh;
     max-height: 93vh;
-    max-width: max(44vw, 400px);
-    min-width: 25vw;
+    max-width: max(44vw, min(80vw, 600px));
+    min-width: 350px;
 }
 
 .panel-content {

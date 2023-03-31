@@ -16,6 +16,7 @@
     --dark-background: #282c34;
     --red: #e45649;
     --green: #6cd839;
+    min-width: 400px;   
 }
 
 .container {
@@ -27,6 +28,7 @@
 .row {
     display: flex;
     justify-content: space-evenly;
+    flex-wrap: wrap;
 }
 
 a {

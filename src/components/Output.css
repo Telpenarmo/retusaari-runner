@@ -10,7 +10,7 @@
 }
 
 #output-panel {
-    flex-grow: 0.5;
+    flex-grow: 1;
 }
 
 #output.error {
