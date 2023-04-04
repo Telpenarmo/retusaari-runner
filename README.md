@@ -60,9 +60,6 @@ Independently of the OS you can run
 ```
 
 to get a bundle ready to run.
-Note that on Linux and MacOs GUI apps have limited access to `$PATH`, so Retusaari run will fail, not being able to find `kotlinc`, if you try to run it from the file explorer.
-Instead, you can run the binary from the terminal.
-I think I have found a way to fix it, but that's not ready for the time being.
 
 ## FAQ
 
