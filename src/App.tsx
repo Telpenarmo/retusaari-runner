@@ -27,26 +27,32 @@ function App() {
             await emit('kill');
             setIsRunning(false);
         } catch (err) {
-            message(err as string, { title: 'Failed to stop', type: 'error' });
+            console.log(err);
+            message(err as string, {
+                title: 'Failed to stop the script execution',
+                type: 'error',
+            });
         }
     }, []);
 
-    const runScript = useCallback(() => {
+    const runScript = useCallback(async () => {
         clearOutput();
         setStatus(undefined);
 
         setIsRunning(true);
 
-        return invoke('run', { code })
-            .catch((err) => {
-                message(err, { title: 'Failed to run', type: 'error' });
-            })
-            .then((r) => {
-                setStatus(r as number);
-            })
-            .finally(() => {
-                setIsRunning(false);
+        try {
+            const exitStatus = await invoke<number>('run', { code });
+            setStatus(exitStatus);
+        } catch (err) {
+            console.log(err);
+            message(err as string, {
+                title: 'Error while running the script',
+                type: 'error',
             });
+        } finally {
+            setIsRunning(false);
+        }
     }, [code]);
 
     const onRunClicked = useCallback(

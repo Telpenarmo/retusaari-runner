@@ -15,12 +15,30 @@ use tokio::{
     time,
 };
 
+type RunCommandOk = Option<i32>;
+
+#[derive(serde::Serialize)]
+pub enum RunCommandError {
+    KotlincNotFound,
+    KotlincPermissionDenied,
+    UnsupportedPlatform,
+    SaveError(String),
+    RemoveError(String),
+    WaitError(String),
+    KillError,
+    FailedSpawn(String),
+}
+
+type RunCommandResult = Result<RunCommandOk, RunCommandError>;
+
 #[tauri::command]
-pub async fn run(window: Window, code: String) -> Result<Option<i32>, String> {
+pub async fn run(window: Window, code: String) -> RunCommandResult {
     eprintln!("Running");
 
     let script_path = script_path(&window)?;
-    save_src(&script_path, code).await?;
+    if let Some(err) = save_src(&script_path, code).await {
+        return Err(RunCommandError::SaveError(err));
+    }
 
     let mut job = spawn_kotlinc(&script_path)?;
 
@@ -38,7 +56,7 @@ pub async fn run(window: Window, code: String) -> Result<Option<i32>, String> {
             let killed = job.kill();
             if let Err(err) = killed {
                 eprintln!("Kill failed, probably process was already dead ({err}).");
-                Err("Kill failed".to_owned())
+                Err(RunCommandError::KillError)
             } else {
                 Ok(None)
             }
@@ -51,9 +69,12 @@ pub async fn run(window: Window, code: String) -> Result<Option<i32>, String> {
     window.unlisten(killer_listener);
     let did_remove = rm_temp_file(&script_path).await;
 
+    if let Some(msg) = did_remove {
+        return Err(RunCommandError::RemoveError(msg));
+    };
+
     eprintln!("Finished");
-    did_remove?;
-    Ok(status?.and_then(|st| st.code()))
+    Ok(status?.and_then(|s| s.code()))
 }
 
 fn spawn_emitters(
@@ -101,34 +122,36 @@ fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
     })
 }
 
-fn map_waiting_error(err: std::io::Error) -> String {
+fn map_waiting_error(err: std::io::Error) -> RunCommandError {
     eprintln!("Waiting error: {err}");
-    "Unknown error while waiting for the runner to finish.".to_owned()
+    RunCommandError::WaitError(err.to_string())
 }
 
-fn script_path(window: &Window) -> Result<PathBuf, &str> {
+fn script_path(window: &Window) -> Result<PathBuf, RunCommandError> {
     let app_handle = window.app_handle();
     let Some(mut path) = app_handle.path_resolver().app_cache_dir() else {
-        return Err("Unsupported platform");
+        return Err(RunCommandError::UnsupportedPlatform);
     };
     path.set_file_name(window.label());
     path.set_extension("kts");
     Ok(path)
 }
 
-async fn save_src(script_path: &Path, src: String) -> Result<(), String> {
+async fn save_src(script_path: &Path, src: String) -> Option<String> {
     tokio::fs::write(script_path, src.as_bytes())
         .await
         .map_err(|e| format!("Failed to save code to temporary file: {e}"))
+        .err()
 }
 
-async fn rm_temp_file(script_path: &Path) -> Result<(), String> {
+async fn rm_temp_file(script_path: &Path) -> Option<String> {
     tokio::fs::remove_file(script_path)
         .await
         .map_err(|e| format!("Failed to remove temporary file: {e}"))
+        .err()
 }
 
-fn spawn_kotlinc(script_path: &Path) -> Result<AsyncGroupChild, String> {
+fn spawn_kotlinc(script_path: &Path) -> Result<AsyncGroupChild, RunCommandError> {
     let mut command = Command::new("kotlinc");
     let command = command.arg("-script").arg(script_path);
 
@@ -136,5 +159,14 @@ fn spawn_kotlinc(script_path: &Path) -> Result<AsyncGroupChild, String> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .group_spawn()
-        .map_err(|e| format!("Failed to spawn kotlinc: {e}"))
+        .map_err(describe_spawn_error)
+}
+
+fn describe_spawn_error(err: std::io::Error) -> RunCommandError {
+    eprintln!("Failed to spawn kotlinc: {err}");
+    match err.kind() {
+        std::io::ErrorKind::NotFound => RunCommandError::KotlincNotFound,
+        std::io::ErrorKind::PermissionDenied => RunCommandError::KotlincPermissionDenied,
+        _ => RunCommandError::FailedSpawn(format!("Failed to run kotlinc: {err}")),
+    }
 }
