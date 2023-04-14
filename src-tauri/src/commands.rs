@@ -14,10 +14,15 @@ use tokio::{
     sync::oneshot,
     time,
 };
+use ts_rs::TS;
 
 type RunCommandOk = Option<i32>;
 
 #[derive(serde::Serialize)]
+#[derive(TS)]
+#[ts(export)]
+#[ts(export_to = "../src/errorDefs.ts")]
+#[ts(rename = "RunError")]
 pub enum RunCommandError {
     KotlincNotFound,
     KotlincPermissionDenied,

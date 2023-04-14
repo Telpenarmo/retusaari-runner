@@ -1,5 +1,4 @@
-export type RunError = "KotlincNotFound" | "KotlincPermissionDenied" | "UnsupportedPlatform" | "KillError"
-    | { SaveError: string } | { RemoveError: string } | { WaitError: string } | { FailedSpawn: string };
+import { RunError } from "./errorDefs";
 
 type ComplexRunErrorType = {
     [P in RunError as '']: P extends object ? { name: keyof P, type: P[keyof P] } : never;

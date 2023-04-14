@@ -8,7 +8,8 @@ import './App.css';
 import { Editor } from './components/Editor';
 import Output from './components/Output';
 import { Position, useSignal } from './utils';
-import { describeError, RunError } from './errors';
+import { describeError } from './errors';
+import { RunError } from './errorDefs';
 
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
