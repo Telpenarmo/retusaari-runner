@@ -8,6 +8,7 @@ import './App.css';
 import { Editor } from './components/Editor';
 import Output from './components/Output';
 import { Position, useSignal } from './utils';
+import { describeError, RunError } from './errors';
 
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
@@ -44,10 +45,12 @@ function App() {
         try {
             const exitStatus = await invoke<number>('run', { code });
             setStatus(exitStatus);
-        } catch (err) {
+        } catch (err_obj) {
+            const err = err_obj as RunError;
             console.log(err);
-            message(err as string, {
-                title: 'Error while running the script',
+            const { title, message: msg } = describeError(err);
+            message(msg, {
+                title,
                 type: 'error',
             });
         } finally {
