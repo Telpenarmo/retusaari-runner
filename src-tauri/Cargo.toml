@@ -20,6 +20,7 @@ tokio = { version = "1.26", features = ["process", "io-util", "macros", "time"] 
 command-group = { version = "2.1.0", features = ["tokio", "with-tokio"] }
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs", branch = "dev"}
 ts-rs = "6.2.1"
+rand = "0.8.5"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

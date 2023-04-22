@@ -2015,6 +2015,7 @@ version = "0.0.0"
 dependencies = [
  "command-group",
  "fix-path-env",
+ "rand 0.8.5",
  "serde",
  "serde_json",
  "tauri",

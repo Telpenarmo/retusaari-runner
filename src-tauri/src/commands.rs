@@ -18,8 +18,7 @@ use ts_rs::TS;
 
 type RunCommandOk = Option<i32>;
 
-#[derive(serde::Serialize)]
-#[derive(TS)]
+#[derive(serde::Serialize, TS)]
 #[ts(export)]
 #[ts(export_to = "../src/errorDefs.ts")]
 #[ts(rename = "RunError")]
@@ -134,11 +133,16 @@ fn map_waiting_error(err: std::io::Error) -> RunCommandError {
 
 fn script_path(window: &Window) -> Result<PathBuf, RunCommandError> {
     let app_handle = window.app_handle();
-    let Some(mut path) = app_handle.path_resolver().app_cache_dir() else {
+    let Some(cache_dir) = app_handle.path_resolver().app_cache_dir() else {
         return Err(RunCommandError::UnsupportedPlatform);
     };
-    path.set_file_name(window.label());
+    std::fs::create_dir(&cache_dir).ok();
+    let r: u16 = rand::random();
+
+    let mut path = cache_dir;
+    path.push(window.label().to_owned() + "_" + &r.to_string());
     path.set_extension("kts");
+
     Ok(path)
 }
 
