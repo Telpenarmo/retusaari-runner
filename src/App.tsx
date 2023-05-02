@@ -2,7 +2,11 @@ import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { emit, TauriEvent } from '@tauri-apps/api/event';
 import { appWindow } from '@tauri-apps/api/window';
-import { message } from '@tauri-apps/api/dialog';
+import {
+    message,
+    open as openFileDialog,
+    save as saveFileDialog,
+} from '@tauri-apps/api/dialog';
 
 import './App.css';
 import { Editor } from './components/Editor';
@@ -95,6 +99,51 @@ function App() {
         appWindow.close();
     });
 
+    async function loadScript() {
+        const selected = await openFileDialog({
+            title: 'Select a script',
+            filters: [
+                {
+                    name: 'Kotlin source files',
+                    extensions: ['kt', 'kts'],
+                },
+            ],
+        });
+        if (!selected || Array.isArray(selected)) {
+            console.log('No file selected');
+
+            return;
+        }
+        console.log('Selected file:', selected);
+
+        setCode('');
+        const newCode = await invoke<string>('load_file', { path: selected });
+        console.log('New code:', newCode);
+        setCode(newCode);
+    }
+
+    async function saveScript() {
+        const selected = await saveFileDialog({
+            title: 'Select a file name for the script',
+            filters: [
+                {
+                    name: 'Kotlin source files',
+                    extensions: ['kt', 'kts'],
+                },
+            ],
+        });
+
+        await invoke('save_file', {
+            path: selected,
+            src: code,
+        });
+
+        console.log('File saved:', selected);
+        message('File saved', {
+            type: 'info',
+        });
+    }
+
     const actions: Action[] = [
         {
             name: 'Run',
@@ -119,6 +168,17 @@ function App() {
             key: 'ArrowDown',
             handler: () =>
                 requestPosition({ line: Infinity, column: Infinity }),
+        },
+        {
+            name: 'Open',
+            key: 'o',
+            handler: loadScript,
+        },
+        {
+            name: 'Save',
+            key: 's',
+            handler: saveScript,
+            // disabled: code.length === 0,
         },
     ];
 

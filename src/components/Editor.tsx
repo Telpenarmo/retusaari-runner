@@ -31,17 +31,17 @@ export const Editor: React.FC<EditorProps> = (props) => {
     const jar = React.useRef<CodeJar | null>(null);
 
     React.useEffect(() => {
-        if (!editorRef.current) return;
+        if (!editorRef.current || !props.onUpdate) return;
 
         jar.current = CodeJar(editorRef.current, highlight, { tab: '  ' });
         jar.current.onUpdate((code) => {
-            const pos = jar.current!.save();
             props.onUpdate(code);
-            jar.current!.restore(pos);
+            console.log('internal code update', code);
         });
+        console.log('jar created', jar.current);
 
         return () => jar.current!.destroy();
-    }, []);
+    }, [editorRef, props.onUpdate]);
 
     function convertPosition(position: Position): CodejarPosition {
         const lines = props.code.split('\n').slice(0, position.line);
@@ -56,9 +56,11 @@ export const Editor: React.FC<EditorProps> = (props) => {
     }
 
     React.useEffect(() => {
-        if (!jar.current || !editorRef.current) return;
+        if (!jar.current) return;
+        if (props.code === jar.current.toString()) return;
+        console.log('external code update:', props.code);
         jar.current.updateCode(props.code);
-    }, []);
+    }, [props.code]);
 
     React.useEffect(() => {
         if (!props.position) return;

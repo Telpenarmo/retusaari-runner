@@ -1,6 +1,9 @@
 use std::{
+    fs::File,
+    io::Read,
     path::{Path, PathBuf},
     process::Stdio,
+    str::FromStr,
 };
 
 use tauri::{async_runtime::TokioJoinHandle, Manager, Window};
@@ -30,7 +33,7 @@ pub enum RunCommandError {
     RemoveError(String),
     WaitError(String),
     KillError,
-    FailedSpawn(String),
+    FailedSpawn(String)
 }
 
 type RunCommandResult = Result<RunCommandOk, RunCommandError>;
@@ -149,7 +152,7 @@ fn script_path(window: &Window) -> Result<PathBuf, RunCommandError> {
 async fn save_src(script_path: &Path, src: String) -> Option<String> {
     tokio::fs::write(script_path, src.as_bytes())
         .await
-        .map_err(|e| format!("Failed to save code to temporary file: {e}"))
+        .map_err(|e| format!("Failed to save code to file: {e}"))
         .err()
 }
 
@@ -178,4 +181,23 @@ fn describe_spawn_error(err: std::io::Error) -> RunCommandError {
         std::io::ErrorKind::PermissionDenied => RunCommandError::KotlincPermissionDenied,
         _ => RunCommandError::FailedSpawn(format!("Failed to run kotlinc: {err}")),
     }
+}
+
+#[tauri::command]
+pub async fn load_file(path: &Path) -> Result<String, String> {
+    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {e}"))?;
+
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)
+        .map_err(|e| format!("Failed to read file: {e}"))?;
+
+    Ok(contents)
+}
+
+#[tauri::command]
+pub async fn save_file(path: String, src: String) -> Result<(), String> {
+    if let Some(err) = save_src(&(PathBuf::from_str(&path).unwrap()), src).await {
+        return Err(err);
+    }
+    Ok(())
 }
