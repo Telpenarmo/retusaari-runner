@@ -108,6 +108,18 @@ function App() {
             handler: killScript,
             disabled: !isRunning,
         },
+        { name: 'Clear', key: 'l', handler: clearOutput },
+        {
+            name: 'Jump to start',
+            key: 'ArrowUp',
+            handler: () => requestPosition({ line: 0, column: 0 }),
+        },
+        {
+            name: 'Jump to end',
+            key: 'ArrowDown',
+            handler: () =>
+                requestPosition({ line: Infinity, column: Infinity }),
+        },
     ];
 
     return (
