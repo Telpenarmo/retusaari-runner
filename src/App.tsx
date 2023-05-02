@@ -11,6 +11,13 @@ import { Position, useSignal } from './utils';
 import { describeError } from './errors';
 import { RunError } from './errorDefs';
 
+interface Action {
+    name: string;
+    key?: string;
+    handler: () => void;
+    disabled?: boolean;
+}
+
 function App() {
     const [code, setCode] = useState('println("Hello, World!")');
     const [clearingSignal, clearOutput] = useSignal();
@@ -69,9 +76,10 @@ function App() {
 
     const handleKeyPress = (e: KeyboardEvent) => {
         if (e.ctrlKey) {
-            if (!isRunning && e.key === 'Enter') runScript();
-
-            if (isRunning && e.key === 'c') killScript();
+            const action = actions.find((a) => a.key === e.key);
+            if (action && !action.disabled) {
+                action.handler();
+            }
         }
     };
 
@@ -86,6 +94,21 @@ function App() {
         await killScript();
         appWindow.close();
     });
+
+    const actions: Action[] = [
+        {
+            name: 'Run',
+            key: 'Enter',
+            handler: runScript,
+            disabled: isRunning,
+        },
+        {
+            name: 'Kill',
+            key: 'c',
+            handler: killScript,
+            disabled: !isRunning,
+        },
+    ];
 
     return (
         <div className="row main">

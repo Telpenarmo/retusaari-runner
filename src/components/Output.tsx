@@ -100,7 +100,7 @@ const Output: React.FC<OutputProps> = (props) => {
         [props.status]
     );
 
-    const rows = ({ index, style }: { index: number; style: CSSProperties }) =>
+    const renderRow = ({ index, style }: { index: number; style: CSSProperties }) =>
         highlightLine(lines.current[index], style);
 
     return (
@@ -115,8 +115,9 @@ const Output: React.FC<OutputProps> = (props) => {
                             // and a bit of extra padding is better than unneeded scroll
                             width={width! - 10}
                             height={height! - 10}
+                            overscanCount={10}
                         >
-                            {rows}
+                            {renderRow}
                         </List>
                     )}
                 </AutoSizer>
