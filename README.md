@@ -15,7 +15,13 @@ The output of your script will appear in the right panel. Should `kotlinc` fail 
 - there's a **Stop** button to stop execution of the script
 - `kotlinc` errors are highlighted, and clicking their locations moves the cursor into proper position.
 - output panel is virtualized, so flooding it with output from some infinite loop won't be a problem
-- keyboard shortcuts! *Ctrl+Enter* for **run** and *Ctrl+C* for **stop**
+- keyboard shortcuts:
+  - *Ctrl+Enter* runs the script
+  - *Ctrl+C* stops the script
+  - *Ctrl+L* clears the output panel
+  - *Ctrl+O* loads a Kotlin file into editor
+  - *Ctrl+S* saves contents of the editor to a file
+- reasonable error messages
 
 ## Building
 
@@ -40,13 +46,7 @@ Phew, that was quite a lot of dependencies!
 I think this should be all. If everything is ready you can simply run
 
 ```sh
-cargo tauri dev
-```
-
-or
-
-```sh
-pnpm tauri dev
+(cargo/pnpm) tauri dev
 ```
 
 and the development version will start.
@@ -68,3 +68,13 @@ to get a bundle ready to run.
 - Ok, right, nobody asked those yet!
 
 [prerequisites]: https://tauri.app/v1/guides/getting-started/prerequisites
+
+## TODO
+
+- [ ] add UI for features that are currently only accessible via keyboard:
+  - [ ] clearing the output
+  - [ ] loading code from file
+  - [ ] saving script to file
+- [ ] write tests
+- [ ] let the user provide live input for the script
+  
