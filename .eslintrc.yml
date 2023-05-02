@@ -5,7 +5,15 @@ extends:
   - eslint:recommended
   - plugin:react/recommended
   - plugin:@typescript-eslint/recommended
-overrides: []
+  - plugin:react-hooks/recommended
+overrides: [
+  {
+    files: [ "*errorDefs.ts"],
+    rules: {
+      "quotes": "off"
+    }
+  }
+]
 parser: "@typescript-eslint/parser"
 parserOptions:
   ecmaVersion: latest
@@ -13,6 +21,7 @@ parserOptions:
 plugins:
   - react
   - "@typescript-eslint"
+  - react-hooks
 rules:
   indent:
     - error
@@ -27,3 +36,6 @@ rules:
     - error
     - always
   "@typescript-eslint/no-non-null-assertion": off
+settings:
+  react:
+    version: "detect"

@@ -97,7 +97,7 @@ const Output: React.FC<OutputProps> = (props) => {
 
             return constructErrorMessage(matched, props.jumpToEditor, style);
         },
-        [props.status]
+        [props.jumpToEditor, props.status]
     );
 
     const renderRow = ({ index, style }: { index: number; style: CSSProperties }) =>

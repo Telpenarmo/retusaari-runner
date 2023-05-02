@@ -1,4 +1,10 @@
-import React, { FormEvent, useCallback, useEffect, useState } from 'react';
+import React, {
+    FormEvent,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from 'react';
 import { invoke } from '@tauri-apps/api/tauri';
 import { emit, TauriEvent } from '@tauri-apps/api/event';
 import { appWindow } from '@tauri-apps/api/window';
@@ -28,12 +34,6 @@ function App() {
     const [isRunning, setIsRunning] = useState(false);
     const [status, setStatus] = useState<number>();
     const [requestedPosition, requestPosition] = useState<Position>();
-
-    const onKillClicked = useCallback((e: FormEvent) => {
-        e.preventDefault();
-
-        return killScript();
-    }, []);
 
     const killScript = useCallback(async () => {
         try {
@@ -68,36 +68,7 @@ function App() {
         } finally {
             setIsRunning(false);
         }
-    }, [code]);
-
-    const onRunClicked = useCallback(
-        (e: FormEvent) => {
-            e.preventDefault();
-            runScript();
-        },
-        [isRunning, runScript]
-    );
-
-    const handleKeyPress = (e: KeyboardEvent) => {
-        if (e.ctrlKey) {
-            const action = actions.find((a) => a.key === e.key);
-            if (action && !action.disabled) {
-                action.handler();
-            }
-        }
-    };
-
-    useEffect(() => {
-        document.addEventListener('keydown', handleKeyPress);
-        return () => {
-            document.removeEventListener('keydown', handleKeyPress);
-        };
-    }, [isRunning, runScript, killScript]);
-
-    appWindow.listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
-        await killScript();
-        appWindow.close();
-    });
+    }, [code, clearOutput]);
 
     async function loadScript() {
         const selected = await openFileDialog({
@@ -122,7 +93,7 @@ function App() {
         setCode(newCode);
     }
 
-    async function saveScript() {
+    const saveScript = useCallback(async () => {
         const selected = await saveFileDialog({
             title: 'Select a file name for the script',
             filters: [
@@ -142,45 +113,89 @@ function App() {
         message('File saved', {
             type: 'info',
         });
-    }
+    }, [code]);
 
-    const actions: Action[] = [
-        {
-            name: 'Run',
-            key: 'Enter',
-            handler: runScript,
-            disabled: isRunning,
+    const onRunClicked = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+            runScript();
         },
-        {
-            name: 'Kill',
-            key: 'c',
-            handler: killScript,
-            disabled: !isRunning,
+        [runScript]
+    );
+
+    const onKillClicked = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+
+            return killScript();
         },
-        { name: 'Clear', key: 'l', handler: clearOutput },
-        {
-            name: 'Jump to start',
-            key: 'ArrowUp',
-            handler: () => requestPosition({ line: 0, column: 0 }),
+        [killScript]
+    );
+
+    const actions: Action[] = useMemo(
+        () => [
+            {
+                name: 'Run',
+                key: 'Enter',
+                handler: runScript,
+                disabled: isRunning,
+            },
+            {
+                name: 'Kill',
+                key: 'c',
+                handler: killScript,
+                disabled: !isRunning,
+            },
+            { name: 'Clear', key: 'l', handler: clearOutput },
+            {
+                name: 'Jump to start',
+                key: 'ArrowUp',
+                handler: () => requestPosition({ line: 0, column: 0 }),
+            },
+            {
+                name: 'Jump to end',
+                key: 'ArrowDown',
+                handler: () =>
+                    requestPosition({ line: Infinity, column: Infinity }),
+            },
+            {
+                name: 'Open',
+                key: 'o',
+                handler: loadScript,
+            },
+            {
+                name: 'Save',
+                key: 's',
+                handler: saveScript,
+                // disabled: code.length === 0,
+            },
+        ],
+        [clearOutput, isRunning, killScript, runScript, saveScript]
+    );
+
+    const handleKeyPress = useCallback(
+        (e: KeyboardEvent) => {
+            if (e.ctrlKey) {
+                const action = actions.find((a) => a.key === e.key);
+                if (action && !action.disabled) {
+                    action.handler();
+                }
+            }
         },
-        {
-            name: 'Jump to end',
-            key: 'ArrowDown',
-            handler: () =>
-                requestPosition({ line: Infinity, column: Infinity }),
-        },
-        {
-            name: 'Open',
-            key: 'o',
-            handler: loadScript,
-        },
-        {
-            name: 'Save',
-            key: 's',
-            handler: saveScript,
-            // disabled: code.length === 0,
-        },
-    ];
+        [actions]
+    );
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyPress);
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress);
+        };
+    }, [isRunning, runScript, killScript, handleKeyPress]);
+
+    appWindow.listen(TauriEvent.WINDOW_CLOSE_REQUESTED, async () => {
+        await killScript();
+        appWindow.close();
+    });
 
     return (
         <div className="row main">
