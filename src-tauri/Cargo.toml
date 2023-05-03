@@ -1,10 +1,10 @@
 [package]
 name = "retusaari-runner"
-version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
+version = "1.1.0"
+description = "GUI app for running Kotlin scripts"
+authors = ["Telpenarmo"]
 license = ""
-repository = ""
+repository = "https://github.com/Telpenarmo/retusaari-runner/"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
