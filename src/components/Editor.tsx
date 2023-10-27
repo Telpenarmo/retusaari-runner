@@ -72,7 +72,8 @@ export const Editor: React.FC<EditorProps> = ({ code, onUpdate, position }) => {
         if (!position) return;
         const pos = convertPosition(position);
         jar.current?.restore(pos);
-    }, [convertPosition, position]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [position]);
 
     return <div className="editor language-kotlin" ref={editorRef} />;
 };
