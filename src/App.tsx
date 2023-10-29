@@ -237,6 +237,7 @@ function App() {
                     status={status ? 'error' : 'default'}
                     jumpToEditor={requestPosition}
                     clear={clearingSignal}
+                    handleInput={() => null}
                 />
 
                 <div className="row button-row">
