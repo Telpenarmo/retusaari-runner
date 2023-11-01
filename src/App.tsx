@@ -115,6 +115,14 @@ function App() {
         });
     }, [code]);
 
+    const sendInput = useCallback((input: string) => {
+        try {
+            emit('input', input);
+        } catch (err) {
+            console.log('Couldn\'t send input', err);
+        }
+    }, []);
+
     const onRunClicked = useCallback(
         (e: FormEvent) => {
             e.preventDefault();
@@ -237,7 +245,7 @@ function App() {
                     status={status ? 'error' : 'default'}
                     jumpToEditor={requestPosition}
                     clear={clearingSignal}
-                    handleInput={() => null}
+                    handleInput={sendInput}
                 />
 
                 <div className="row button-row">

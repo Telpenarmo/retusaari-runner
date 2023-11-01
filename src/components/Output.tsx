@@ -112,7 +112,7 @@ const Output: React.FC<OutputProps> = (props) => {
         console.log(content);
 
         if (enterPressed.current) {
-            props.handleInput(content);
+            props.handleInput(content + '\n');
             lines.current.push(content);
             setLinesCount((n) => n + 1);
             setInputText('');

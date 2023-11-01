@@ -10,11 +10,11 @@ use tauri::{async_runtime::TokioJoinHandle, Manager, Window};
 
 use command_group::{AsyncCommandGroup, AsyncGroupChild};
 use tokio::{
-    io::{AsyncRead, AsyncReadExt, BufReader},
+    io::{AsyncRead, AsyncReadExt, AsyncWriteExt, BufReader},
     join,
     process::Command,
     select,
-    sync::oneshot,
+    sync::{mpsc, oneshot},
     time,
 };
 use ts_rs::TS;
@@ -33,7 +33,7 @@ pub enum RunCommandError {
     RemoveError(String),
     WaitError(String),
     KillError,
-    FailedSpawn(String)
+    FailedSpawn(String),
 }
 
 type RunCommandResult = Result<RunCommandOk, RunCommandError>;
@@ -48,6 +48,18 @@ pub async fn run(window: Window, code: String) -> RunCommandResult {
     }
 
     let mut job = spawn_kotlinc(&script_path)?;
+
+    let stdin = job.inner().stdin.take().unwrap();
+    let (stdin_sender, stdin_receiver) = mpsc::channel(1);
+    let input_listener = window.listen("input", move |ev| {
+        let input = ev.payload().unwrap_or("");
+        let input: String = serde_json::from_str(input).unwrap();
+        if let Err(err) = stdin_sender.try_send(input) {
+            eprintln!("Failed to send input to stdin: {err}");
+        }
+    });
+
+    let stdin_writer = spawn_stdin_writer(stdin, stdin_receiver);
 
     let (stdout_emitter, stderr_emitter) = spawn_emitters(&mut job, window.clone());
 
@@ -70,7 +82,9 @@ pub async fn run(window: Window, code: String) -> RunCommandResult {
         }
     };
 
-    let _ = join!(stdout_emitter, stderr_emitter); // ensure emitters finished too
+    window.unlisten(input_listener);
+
+    let _ = join!(stdout_emitter, stderr_emitter, stdin_writer); // ensure emitters finished too
 
     // cleanup
     window.unlisten(killer_listener);
@@ -96,6 +110,20 @@ fn spawn_emitters(
     let err_ = emit_output(stderr, window, "stderr");
 
     (out_, err_)
+}
+
+fn spawn_stdin_writer(
+    mut stdin: tokio::process::ChildStdin,
+    mut stdin_receiver: mpsc::Receiver<String>,
+) -> TokioJoinHandle<()> {
+    tokio::spawn(async move {
+        while let Some(input) = stdin_receiver.recv().await {
+            if let Err(err) = stdin.write_all(input.as_bytes()).await {
+                eprintln!("Failed to write to stdin: {err}");
+            }
+            eprintln!("Sent input: {}", input);
+        }
+    })
 }
 
 fn emit_output<R: AsyncRead + std::marker::Unpin + std::marker::Send + 'static>(
@@ -170,6 +198,7 @@ fn spawn_kotlinc(script_path: &Path) -> Result<AsyncGroupChild, RunCommandError>
     command
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .stdin(Stdio::piped())
         .group_spawn()
         .map_err(describe_spawn_error)
 }
