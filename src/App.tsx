@@ -246,6 +246,7 @@ function App() {
                     jumpToEditor={requestPosition}
                     clear={clearingSignal}
                     handleInput={sendInput}
+                    running={isRunning}
                 />
 
                 <div className="row button-row">

@@ -10,8 +10,14 @@ import React, {
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
 
-import { ErrorMessageMatch, matchErrorMessage, Position } from '../utils';
+import {
+    ErrorMessageMatch,
+    matchErrorMessage,
+    Position,
+    useSignal,
+} from '../utils';
 import './Output.css';
+import { InputLine } from './InputLine';
 
 type JumpHandler = (pos: Position) => void;
 
@@ -58,13 +64,14 @@ interface OutputProps {
     jumpToEditor: JumpHandler;
     clear: unknown; // clear output whenever this changes
     handleInput: (input: string) => void;
+    running: boolean;
 }
 
 const Output: React.FC<OutputProps> = (props) => {
     const lines = useRef<string[]>([]);
     const [linesCount, setLinesCount] = useState(0);
     const prompt = '>';
-    const promptLength = prompt.length + 2 + 'ch';
+    const [clearingSignal, clearInputLine] = useSignal();
 
     useEffect(() => {
         const promise = listen<string>('output', (ev) => {
@@ -87,7 +94,8 @@ const Output: React.FC<OutputProps> = (props) => {
     useEffect(() => {
         setLinesCount(0);
         lines.current.length = 0;
-        setInputText('');
+        clearInputLine();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.clear]);
 
     const highlightLine = useCallback(
@@ -104,36 +112,14 @@ const Output: React.FC<OutputProps> = (props) => {
         [props.jumpToEditor, props.status]
     );
 
-    const [inputText, setInputText] = useState('');
-    const enterPressed = useRef(false);
-
-    const handleInputChange = (event: React.FocusEvent) => {
-        const content = event.target.textContent || '';
-        console.log(content);
-
-        if (enterPressed.current) {
-            props.handleInput(content + '\n');
-            lines.current.push(content);
+    const submitLine = useCallback(
+        (input: string) => {
+            lines.current.push(input);
             setLinesCount((n) => n + 1);
-            setInputText('');
-            enterPressed.current = false;
-            document.getElementById('stdin-input')!.focus();
-            return;
-        }
-
-        setInputText(content);
-    };
-
-    const handleInputKeyDown = (
-        event: React.KeyboardEvent<HTMLInputElement>
-    ) => {
-        if (event.key === 'Enter') {
-            // Handle the input when the Enter key is pressed
-            event.preventDefault();
-            enterPressed.current = true;
-            document.getElementById('stdin-input')!.blur();
-        }
-    };
+            props.handleInput(input + '\n');
+        },
+        [props]
+    );
 
     const renderRow = ({
         index,
@@ -144,33 +130,14 @@ const Output: React.FC<OutputProps> = (props) => {
     }) => {
         if (index === linesCount)
             return (
-                <>
-                    <span
-                        style={{
-                            ...style,
-                            cursor: 'default',
-                            color: 'var(--green)',
-                        }}
-                    >
-                        {prompt}
-                    </span>
-                    <span
-                        id="stdin-input"
-                        style={{
-                            ...style,
-                            marginLeft: promptLength,
-                            width: 'calc(99% - ' + promptLength + ')',
-                        }}
-                        contentEditable
-                        onBlur={handleInputChange}
-                        onKeyDown={handleInputKeyDown}
-                        suppressContentEditableWarning
-                    >
-                        {inputText}
-                    </span>
-                </>
+                <InputLine
+                    prompt={prompt}
+                    submitLine={submitLine}
+                    clear={clearingSignal}
+                    style={style}
+                />
             );
-        return highlightLine(lines.current[index], style);
+        else return highlightLine(lines.current[index], style);
     };
 
     return (
@@ -179,7 +146,7 @@ const Output: React.FC<OutputProps> = (props) => {
                 <AutoSizer>
                     {({ height, width }) => (
                         <List
-                            itemCount={linesCount + 1}
+                            itemCount={linesCount + (props.running ? 1 : 0)}
                             itemSize={30}
                             // -10, because AutoSizer doesn't capture the exact sizes,
                             // and a bit of extra padding is better than unneeded scroll
