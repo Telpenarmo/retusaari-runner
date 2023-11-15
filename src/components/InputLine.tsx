@@ -1,4 +1,5 @@
 import React, { CSSProperties, useEffect, useRef, useState } from 'react';
+import './InputLine.css';
 
 type InputLineProps = {
     prompt: string;
@@ -9,7 +10,6 @@ type InputLineProps = {
 
 export const InputLine: React.FC<InputLineProps> = (props) => {
     const [inputText, setInputText] = useState('');
-    const promptLength = prompt.length + 2 + 'ch';
     const id = 'stdin-input';
     const self = () => document.getElementById(id)!;
 
@@ -43,26 +43,29 @@ export const InputLine: React.FC<InputLineProps> = (props) => {
             enterPressed.current = true;
             self().blur();
         }
+        if (event.key === 'Tab') {
+            event.preventDefault();
+            self().textContent = self().textContent + '    ';
+            document.getSelection()!.modify('move', 'forward', 'line');
+        }
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            self().blur();
+        }
+    };
+
+    const promptLength = prompt.length + 2 + 'ch';
+    const inputAreaStyle = {
+        marginLeft: promptLength,
+        width: `calc(100% - ${promptLength})`,
     };
 
     return (
-        <>
-            <span
-                style={{
-                    ...props.style,
-                    cursor: 'default',
-                    color: 'var(--green)',
-                }}
-            >
-                {props.prompt}
-            </span>
+        <span style={props.style}>
+            <span className="prompt">{props.prompt}</span>
             <span
                 id={id}
-                style={{
-                    ...props.style,
-                    marginLeft: promptLength,
-                    width: `calc(99% - ${promptLength})`,
-                }}
+                style={inputAreaStyle}
                 contentEditable
                 onBlur={handleInputChange}
                 onKeyDown={handleInputKeyDown}
@@ -70,6 +73,6 @@ export const InputLine: React.FC<InputLineProps> = (props) => {
             >
                 {inputText}
             </span>
-        </>
+        </span>
     );
 };
