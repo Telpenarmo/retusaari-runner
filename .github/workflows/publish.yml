@@ -1,6 +1,5 @@
 name: 'publish'
 
-# This will trigger the action on each push to the `release` branch.
 on:
   push:
     tags:
@@ -56,5 +55,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: ${{ steps.outputs.RELEASE_TITLE }}
-          releaseBody: ${{ steps.outputs.RELEASE_BODY }}
+          releaseName: ${{ steps.title.outputs.RELEASE_TITLE }}
+          releaseBody: ${{ steps.body.outputs.RELEASE_BODY }}
