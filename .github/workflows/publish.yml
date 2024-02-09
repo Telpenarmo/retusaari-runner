@@ -46,14 +46,14 @@ jobs:
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          echo "RELEASE_TITLE=$(git tag -l --format='%(subject)' $TAG)" >> $GITHUB_OUTPUT
+          echo "RELEASE_TITLE='$(git tag -l --format='%(subject)' $TAG)'" >> $GITHUB_OUTPUT
         id: title
 
       - name: Retrieve release body
         env:
           TAG: ${{ github.ref_name }}
         run: |
-          echo "RELEASE_BODY=$(git tag -l --format='%(body)' $TAG)" >> $GITHUB_OUTPUT
+          echo "RELEASE_BODY='$(git tag -l --format='%(body)' $TAG)'" >> $GITHUB_OUTPUT
         id: body
 
       - uses: tauri-apps/tauri-action@v0
