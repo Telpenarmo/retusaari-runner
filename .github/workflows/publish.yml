@@ -42,8 +42,24 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
+      - name: Retrieve release title
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "RELEASE_TITLE='$(git tag -l --format='%(subject)' $TAG)'" >> $GITHUB_OUTPUT
+        id: title
+
+      - name: Retrieve release body
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "RELEASE_BODY='$(git tag -l --format='%(body)' $TAG)'" >> $GITHUB_OUTPUT
+        id: body
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
+          releaseName: ${{ steps.title.outputs.RELEASE_TITLE }}
+          releaseBody: ${{ steps.body.outputs.RELEASE_BODY }}
