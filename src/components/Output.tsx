@@ -107,7 +107,7 @@ const Output: React.FC<OutputProps> = (props) => {
         <div className="panel-content">
             <pre id="output" className={`hljs ${props.status}`}>
                 <AutoSizer>
-                    {({ height, width }) => (
+                    {({ height, width }: { height: number; width: number }) => (
                         <List
                             itemCount={linesCount}
                             itemSize={30}
